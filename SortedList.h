@@ -20,31 +20,25 @@ public:
 
 	SortedList<Type> * insert(Type * dataIn) {
 		if(!isSet) {
-			std::cout << "Not set... Setting..." << std::endl;
 			data = dataIn;
 			isSet = true;
 			return this;
 		}
 		if(((*dataIn) < (*(data))) ^ (highToLowSorting)) {
-			std::cout << "THE NEW IS LOWER" << std::endl;
 			return new SortedList(dataIn, this, true, highToLowSorting);
 		} else {
-			std::cout << "Iterating..." << std::endl;
 			SortedList<Type> * temp = this;
 			while(true) {
 				if(!temp->isSet) {
-					std::cout << "This one is not set... Setting it..." << std::endl;
 					temp->data = dataIn;
 					temp->isSet = true;
 					return this;
 				}
 				if(temp->next == 0) {
-					std::cout << "There is no next node... Creating..." << std::endl;
 					temp->next = new SortedList(dataIn, 0, true, highToLowSorting);
 					return this;
 				}
 				if(((*dataIn) < (*(temp->next->data))) ^ highToLowSorting) {
-					std::cout << "Found insertion area... Inserting..." << std::endl;
 					temp->next = new SortedList(dataIn, temp->next, true, highToLowSorting);
 					return this;
 				}
@@ -54,6 +48,7 @@ public:
 	}
 
 	SortedList<Type> * remove(Type * dataIn) {
+		std::cout << "Removing order" << std::endl;
 		if(data == dataIn) {
 			if(next == 0) {
 				isSet = false;
@@ -67,15 +62,16 @@ public:
 			return this;
 		}
 		SortedList<Type> * temp = this;
+		std::cout << "Searching for order" << std::endl;
 		while(temp->next != 0 && temp->next->isSet) {
 			if(temp->next->data == dataIn) {
-				SortedList * toDelete = temp->next;
+				SortedList<Type> * toDelete = temp->next;
 				temp->next = temp->next->next;
+				std::cout << "Trying to delete order" << std::endl;
 				delete toDelete;
 			}
 			temp = temp->next;
 		}
-		std::cout << "Node not found..." << std::endl;
 		return this;
 	}
 
@@ -94,9 +90,7 @@ public:
 	}
 
 	void print()  {
-		std::cout << "PRINTING" << std::endl;
 		if(!isSet) {
-			std::cout << "Not set" << std::endl;
 			return;
 		} else {
 			SortedList<Type> * temp = this;

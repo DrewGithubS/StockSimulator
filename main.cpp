@@ -4,6 +4,7 @@
 #include "AccountList.h"
 #include "Account.h"
 #include "Order.h"
+#include "SortedList.h"
 
 // Values are in pennies
 int STARTINGCASH = 10000000;
@@ -22,15 +23,20 @@ int main() {
 	Order * temp;
 	std::cout << "4" << std::endl;
 	for(int j = 0; j < MAXORDERSPERUSER/2; j++) {
+		for(int i = 0; i < accountList->accountsCreated; i++) {
+			accountList->accounts[i]->limitBuy(1, STARTINGSTOCKPRICE - (j * PENNIESINADOLLAR));
+		}
+	}
+	market->print();
+	std::cout << "Selling" << std::endl;
+	for(int j = 0; j < MAXORDERSPERUSER/2; j++) {
 		std::cout << " " << j << std::endl;
 		for(int i = 0; i < accountList->accountsCreated; i++) {
 			std::cout << "  " << i << std::endl;
-			accountList->accounts[i]->limitBuy(1, STARTINGSTOCKPRICE - (j * PENNIESINADOLLAR));
 			accountList->accounts[i]->limitSell(1, STARTINGSTOCKPRICE + (j * PENNIESINADOLLAR));
 		}
 	}
 	std::cout << "4" << std::endl;
-
 	accountList->accounts[0]->limitBuy(2, 10100);
 	std::cout << "5" << std::endl;
 

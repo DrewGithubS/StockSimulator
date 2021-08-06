@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <iostream>
 
 #include "Account.h"
 #include "Order.h"
@@ -59,32 +60,39 @@ void Account::marketBuy(int shares) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex++] = new Order(shares, 0, &money, &shares, true, true, false, this);
+	orders[currentOrderIndex] = new Order(shares, 0, &money, &shares, true, true, false, this);
 	market->handleMarketBuy(orders[currentOrderIndex]);
+	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
 void Account::marketSell(int shares) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex++] = new Order(shares, 0, &money, &shares, true, false, false, this);
+	orders[currentOrderIndex] = new Order(shares, 0, &money, &shares, true, false, false, this);
 	market->handleMarketSell(orders[currentOrderIndex]);
+	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
 void Account::limitBuy(int shares, int price) {
+	std::cout << "Limit buy" << std::endl;
 	if(orders[currentOrderIndex]) {
+		std::cout << "Cancelling order" << std::endl;
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex++] = new Order(shares, price, &money, &shares, false, true, false, this);
+	std::cout << "Next" << std::endl;
+	orders[currentOrderIndex] = new Order(shares, price, &money, &shares, false, true, false, this);
 	market->handleLimitBuy(orders[currentOrderIndex]);
+	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
 void Account::limitSell(int shares, int price) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex++] = new Order(shares, price, &money, &shares, false, false, false, this);
+	orders[currentOrderIndex] = new Order(shares, price, &money, &shares, false, false, false, this);
 	market->handleLimitSell(orders[currentOrderIndex]);
+	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
 void Account::cancelOrder(Order * order) {
