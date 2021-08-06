@@ -1,5 +1,5 @@
-Exec = SortedListTest
-OPTS = -O3 -march=native -std=c++11 -g
+Exec = main
+OPTS = -O3 -std=c++11 -g
 
 objects := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 objects += $(patsubst ../Board/%.cpp,../Board/%.o,$(wildcard ../Board/*.cpp))

@@ -12,7 +12,6 @@ public:
 	bool isMarketOrder;
 	bool isBuying;
 	bool isLiquidation;
-	int cost;
 	const Account * sender;
 
 	Order(int sharesIn, int priceIn, int * orderersMoneyIn, int * orderersSharesIn, bool isMarketOrderIn, bool isBuyingIn, bool isLiquidationIn, const Account * senderIn);

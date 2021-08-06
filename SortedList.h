@@ -25,7 +25,7 @@ public:
 			isSet = true;
 			return this;
 		}
-		if((*dataIn < *(data)) ^ highToLowSorting) {
+		if(((*dataIn) < (*(data))) ^ (highToLowSorting)) {
 			std::cout << "THE NEW IS LOWER" << std::endl;
 			return new SortedList(dataIn, this, true, highToLowSorting);
 		} else {
@@ -43,7 +43,7 @@ public:
 					temp->next = new SortedList(dataIn, 0, true, highToLowSorting);
 					return this;
 				}
-				if(*dataIn < (*(temp->next->data)) ^ highToLowSorting) {
+				if(((*dataIn) < (*(temp->next->data))) ^ highToLowSorting) {
 					std::cout << "Found insertion area... Inserting..." << std::endl;
 					temp->next = new SortedList(dataIn, temp->next, true, highToLowSorting);
 					return this;
@@ -104,6 +104,20 @@ public:
 				temp->data->print();
 				temp = temp->next;
 			}
+		}
+	}
+
+	void printAdded(bool buying) {
+		SortedList<Type> * temp = this;
+		while(temp != 0 && temp->isSet) {
+			int strikePrice = temp->data->price;
+			int sharesAtStrike = temp->data->fillsLeft;
+			while((temp = temp->next) != 0 && 
+			  temp->isSet && 
+		      temp->data->price == strikePrice) {
+				sharesAtStrike += temp->data->fillsLeft;
+			}
+			std::cout << sharesAtStrike << " " << (buying ? "B" : "S") << " @ " << strikePrice/100 << "." << strikePrice%100 << std::endl;
 		}
 	}
 };

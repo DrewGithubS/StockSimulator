@@ -11,7 +11,6 @@ Order::Order(int sharesIn, int priceIn, int * orderersMoneyIn, int * orderersSha
 	isBuying = isBuyingIn;
 	isLiquidation = isLiquidationIn;
 	sender = senderIn;
-	cost = fillsLeft * price;
 }
 
 bool Order::operator==(const Order & order1) {

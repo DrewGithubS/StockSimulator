@@ -21,6 +21,7 @@ public:
 	void handleLimitSell(Order * order);
 
 	void cancelOrder(Order * order);
+	void print();
 };
 
 #endif

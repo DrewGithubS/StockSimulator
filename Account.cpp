@@ -11,6 +11,48 @@ Account::Account(int startingMoney, int startingShares, int maxOrdersIn, Market 
 	orders = (Order **) calloc(maxOrders, sizeof(Order *));
 	market = marketIn;
 	currentOrderIndex = 0;
+	isActive = true;
+}
+
+void Account::marginCall() {
+	// Begin liquidation
+	for(int i = 0; i < maxOrders; i++) {
+		market->cancelOrder(orders[i]);
+	}
+
+	bool buying = (shares < 0) ? true : false;
+	int sharesToCover = (shares < 0) ? (-shares) : shares;
+
+	// Make a new market order to cover 
+	//					                                Market?  Buy?    Liquidating?
+	Order * order = new Order(sharesToCover, 0, &money, &shares, true, buying, true, this);
+	if(buying) {
+		market->handleMarketBuy(order);
+	} else {
+		market->handleMarketSell(order);
+	}
+	isActive = false;
+}
+
+void Account::doAction() {
+	if(isActive) {
+		int totalCash = money;
+		int totalShares = shares;
+		for(int i = 0; i < maxOrders; i++) {
+			// Gets the shares that the user has including orders that haven't been filled.
+			totalCash += orders[i]->fillsLeft * orders[i]->price * orders[i]->isBuying;
+			totalShares -= orders[i]->fillsLeft * !(orders[i]->isBuying);
+		}
+
+		int equity = totalCash + totalShares * market->lastPrice;
+
+		if(equity < 0) {
+			marginCall();
+		} else {
+			// Get action
+			// Do action
+		}
+	}
 }
 
 void Account::marketBuy(int shares) {

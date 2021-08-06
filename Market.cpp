@@ -147,8 +147,25 @@ void Market::handleLimitSell(Order * sellOrder) {
 
 void Market::cancelOrder(Order * order) {
 	if(order->isBuying) {
+		*(order->orderersMoney) += order->fillsLeft * order->price;
 		buyers = buyers->remove(order);
 	} else {
+		*(order->orderersShares) += order->fillsLeft;
 		sellers = sellers->remove(order);
 	}
+}
+
+void Market::print() {
+	std::cout << "Current Price: " << lastPrice/100 << "." << lastPrice%100 << std::endl;
+	std::cout << "Current Volume: " << volume << std::endl;
+	std::cout << "\nCurrent Order Book:" << std::endl;
+	// Printing the order book...
+	SortedList<Order> * invertedBuyList = new SortedList<Order>(0, 0, false, false);
+	SortedList<Order> * temp = buyers;
+	while(buyers != 0 && buyers->isSet) {
+		invertedBuyList->insert(buyers->data);
+		buyers = buyers->next;
+	}
+	invertedBuyList->printAdded(true);
+	sellers->printAdded(false);
 }

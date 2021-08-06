@@ -12,9 +12,12 @@ public:
 	int maxOrders;
 	Order ** orders;
 	Market * market;
+	bool isActive;
 
 	Account(int startingMoney, int startingShares, int maxOrdersIn, Market * marketIn);
 	
+	void marginCall();
+	void doAction();
 	void marketBuy(int shares);
 	void marketSell(int shares);
 	void limitBuy(int shares, int price);
