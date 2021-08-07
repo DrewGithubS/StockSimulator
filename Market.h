@@ -6,14 +6,25 @@ class Order;
 template<class Type>
 class SortedList;
 
+template<class Type>
+class CircularBuffer;
+
+struct PriceData {
+	int price;
+	int volume;
+}
+
 class Market {
 public:
 	int volume;
 	int lastPrice;
 	SortedList<Order> * buyers;
 	SortedList<Order> * sellers;
+	int historyLength;
+	CircularBuffer<int> history;
 
-	Market(int lastPrice);
+
+	Market(int lastPrice, int historyLengthIn);
 
 	void handleMarketBuy(Order * order);
 	void handleMarketSell(Order * order);
@@ -21,6 +32,7 @@ public:
 	void handleLimitSell(Order * order);
 
 	void cancelOrder(Order * order);
+	void updatePrice();
 	void print();
 };
 

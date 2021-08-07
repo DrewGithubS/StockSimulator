@@ -3,10 +3,12 @@
 #include "Order.h"
 #include "SortedList.h"
 
-Market::Market(int lastPriceIn) {
+Market::Market(int lastPriceIn, int historyLengthIn) {
 	lastPrice = lastPriceIn;
 	buyers = new SortedList<Order>(0, 0, false, true);
 	sellers = new SortedList<Order>(0, 0, false, false);
+	historyLength = historyLengthIn;
+	history = new CircularBuffer<int>(historyLength);
 }
 
 void Market::handleMarketBuy(Order * buyOrder) {
@@ -28,6 +30,9 @@ void Market::handleMarketBuy(Order * buyOrder) {
 		// Take the shares from the orders fillsLeft
 		buyOrder->fillsLeft -= fillAmount;
 		sellOrder->fillsLeft-= fillAmount;
+
+		lastPrice = sellOrder->price;
+		volume += fillAmount;
 
 		if(sellOrder->fillsLeft == 0) {
 			sellOrder->sender->orders[sellOrder->sender->currentOrderIndex] = 0;
@@ -58,6 +63,8 @@ void Market::handleMarketSell(Order * sellOrder) {
 		sellOrder->fillsLeft -= fillAmount;
 		buyOrder->fillsLeft-= fillAmount;
 
+		lastPrice = buyOrder->price;
+		volume += fillAmount;
 		if(buyOrder->fillsLeft == 0) {
 			delete buyOrder;
 			buyOrder->sender->orders[buyOrder->sender->currentOrderIndex] = 0;
@@ -69,10 +76,9 @@ void Market::handleMarketSell(Order * sellOrder) {
 }
 
 void Market::handleLimitBuy(Order * buyOrder) {
-	std::cout << "Handling limit buy" << std::endl;
 	if(sellers->isSet) {
 		Order * sellOrder = sellers->data;
-		while(buyOrder->fillsLeft > 0 && sellers->isSet && (sellOrder->price) <= (buyOrder->price)) {
+		while(sellers != 0 && buyOrder->fillsLeft > 0 && sellers->isSet && ((*sellOrder) <= (*buyOrder))) {
 			sellOrder = sellers->data;
 			// Buy as much as possible without overspending or over using the next sell order.
 			int fillAmount = (buyOrder->fillsLeft) < (sellOrder->fillsLeft) ? (buyOrder->fillsLeft) : sellOrder->fillsLeft;
@@ -88,10 +94,14 @@ void Market::handleLimitBuy(Order * buyOrder) {
 			// Take the shares from the orders fillsLeft
 			buyOrder->fillsLeft -= fillAmount;
 			sellOrder->fillsLeft-= fillAmount;
+
+			lastPrice = sellOrder->price;
+			volume += fillAmount;
 			if(sellOrder->fillsLeft == 0) {
 				sellOrder->sender->orders[sellOrder->sender->currentOrderIndex] = 0;
 				delete sellOrder;
 				sellers = sellers->deleteCurrent();
+				sellOrder = sellers->data;
 			}
 		}
 		if(buyOrder->fillsLeft > 0) {
@@ -114,17 +124,26 @@ void Market::handleLimitBuy(Order * buyOrder) {
 }
 
 void Market::handleLimitSell(Order * sellOrder) {
-	if(sellers->isSet) {
-		Order * buyOrder = sellers->data;
-		while(sellOrder->fillsLeft > 0 && buyers->isSet && (buyOrder->price) >= (sellOrder->price)) {
-			buyOrder = sellers->data;
+	if(buyers->isSet) {
+		Order * buyOrder = buyers->data;
+		std::cout << "MARKER BELOW:" << std::endl;
+		std::cout << buyOrder->price << " " << sellOrder->price << std::endl;
+		std::cout << (sellOrder->fillsLeft > 0) << " " << (buyers->isSet) << " " << ((*sellOrder) <= (*buyOrder)) << std::endl;
+		while(buyOrder != 0 && sellOrder->fillsLeft > 0 && buyers->isSet && ((*sellOrder) <= (*buyOrder))) {
+			std::cout << "THERE IS AN ORDER HERE" << std::endl;
+			buyOrder = buyers->data;
 			// Sell as much as possible without overspending or over using the next buy order.
+			std::cout << "TEST3" << std::endl;
+			std::cout << (sellOrder->fillsLeft) << std::endl;
+			std::cout << buyOrder << std::endl;
+			std::cout << (buyOrder->fillsLeft) << std::endl;
 			int fillAmount = (sellOrder->fillsLeft) < (buyOrder->fillsLeft) ? (sellOrder->fillsLeft) : buyOrder->fillsLeft;
+			std::cout << "TEST2.5" << std::endl;
 			if(!sellOrder->isLiquidation) {
 				int margin = ((*(sellOrder->orderersMoney)) + (*(sellOrder->orderersShares) * lastPrice * 2));
-				fillAmount = (margin / (buyOrder->price)) < fillAmount ? (margin / (buyOrder->price)) : fillAmount;
+				fillAmount = (margin / (sellOrder->price)) < fillAmount ? (margin / (sellOrder->price)) : fillAmount;
 			}
-
+			std::cout << "TEST2" << std::endl;
 			// Take the shares from the seller
 			*(buyOrder->orderersShares) -= fillAmount;
 			// Give the money to the seller
@@ -132,27 +151,31 @@ void Market::handleLimitSell(Order * sellOrder) {
 			// Take the shares from the orders fillsLeft
 			sellOrder->fillsLeft -= fillAmount;
 			buyOrder->fillsLeft-= fillAmount;
-
+			std::cout << "TEST1" << std::endl;
+			lastPrice = buyOrder->price;
+			volume += fillAmount;
 			if(buyOrder->fillsLeft == 0) {
 				buyOrder->sender->orders[buyOrder->sender->currentOrderIndex] = 0;
 				delete buyOrder;
 				buyers = buyers->deleteCurrent();
+				buyOrder = buyers->data;
 			}
 		}
 		if(sellOrder->fillsLeft > 0) {
 			// Make sure the buyer isn't over-spending
 			int margin = ((*(sellOrder->orderersMoney)) + (*(sellOrder->orderersShares) * lastPrice * 2));
 			int fillAmount = (margin / (buyOrder->price)) < fillAmount ? (margin / (buyOrder->price)) : fillAmount;
-			sellOrder->fillsLeft = (margin / buyOrder->price) < buyOrder->fillsLeft ? (margin / buyOrder->price) : buyOrder->fillsLeft;
+			sellOrder->fillsLeft = (margin / sellOrder->price) < sellOrder->fillsLeft ? (margin / sellOrder->price) : sellOrder->fillsLeft;
 			// Take the money from the orderer 
-			*(sellOrder->orderersShares) -= buyOrder->fillsLeft;
-			sellers->insert(sellOrder);
+			*(sellOrder->orderersShares) -= sellOrder->fillsLeft;
+			std::cout << "MOST RECENT BUYER: " << buyers->data->price << std::endl;
+			sellers = sellers->insert(sellOrder);
 		} else {
 			sellOrder->sender->orders[buyOrder->sender->currentOrderIndex] = 0;
 			delete sellOrder;
 		}
 	} else {
-		// Make sure the buyer isn't over-spending
+		// Make sure the seller isn't over-spending
 		int margin = ((*(sellOrder->orderersMoney)) + (*(sellOrder->orderersShares) * lastPrice * 2));
 		int fillAmount = (margin / (sellOrder->price)) < fillAmount ? (margin / (sellOrder->price)) : fillAmount;
 		sellOrder->fillsLeft = (margin / sellOrder->price) < sellOrder->fillsLeft ? (margin / sellOrder->price) : sellOrder->fillsLeft;
@@ -164,7 +187,6 @@ void Market::handleLimitSell(Order * sellOrder) {
 
 void Market::cancelOrder(Order * order) {
 	if(order->isBuying) {
-		std::cout << "Cancelling buy order" << std::endl;
 		*(order->orderersMoney) += order->fillsLeft * order->price;
 		buyers = buyers->remove(order);
 	} else {
@@ -173,21 +195,31 @@ void Market::cancelOrder(Order * order) {
 	}
 }
 
+void Market::updatePrice() {
+	history.append(PriceData{lastPrice, volume});
+	volume = 0;
+}
+
 void Market::print() {
 	std::cout << "Current Price: " << lastPrice/100 << "." << lastPrice%100 << std::endl;
 	std::cout << "Current Volume: " << volume << std::endl;
 	std::cout << "\nCurrent Order Book:" << std::endl;
 	// Printing the order book...
-	SortedList<Order> * invertedBuyList = new SortedList<Order>(buyers->isSet ? buyers->data : 0, 0, true, false);
-	SortedList<Order> * temp = buyers;
-	std::cout << "ATTEMPTING TO PRINT" << std::endl;
-	std::cout << "ATTEMPTING TO PRINT" << std::endl;
-	std::cout << "ATTEMPTING TO PRINT" << std::endl;
-	std::cout << "ATTEMPTING TO PRINT" << std::endl;
-	std::cout << "ATTEMPTING TO PRINT" << std::endl;
-	while((temp = temp->next) != 0 && temp->isSet) {
-		invertedBuyList = invertedBuyList->insert(temp->data);
+	SortedList<Order> * invertedBuyList = new SortedList<Order>(buyers->isSet ? buyers->data : 0, 0, buyers->isSet, false);
+	SortedList<Order> * tempBuy = buyers;
+	SortedList<Order> * invertedSellList = new SortedList<Order>(sellers->isSet ? sellers->data : 0, 0, sellers->isSet, true);
+	SortedList<Order> * tempSell = sellers;
+	if(tempBuy != 0) {
+		while((tempBuy = tempBuy->next) != 0 && tempBuy->isSet) {
+			invertedBuyList = invertedBuyList->insert(tempBuy->data);
+		}
 	}
-	sellers->printAdded(false);
-	invertedBuyList->printAdded(true);
+	if(tempSell != 0) {
+		while((tempSell = tempSell->next) != 0 && tempSell->isSet) {
+			invertedSellList = invertedSellList->insert(tempSell->data);
+		}
+	}
+	invertedSellList->printAdded(false);
+	std::cout << std::endl;
+	buyers->printAdded(true);
 }

@@ -75,12 +75,9 @@ void Account::marketSell(int shares) {
 }
 
 void Account::limitBuy(int shares, int price) {
-	std::cout << "Limit buy" << std::endl;
 	if(orders[currentOrderIndex]) {
-		std::cout << "Cancelling order" << std::endl;
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	std::cout << "Next" << std::endl;
 	orders[currentOrderIndex] = new Order(shares, price, &money, &shares, false, true, false, this);
 	market->handleLimitBuy(orders[currentOrderIndex]);
 	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;

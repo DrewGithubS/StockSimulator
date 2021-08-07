@@ -14,19 +14,27 @@ Order::Order(int sharesIn, int priceIn, int * orderersMoneyIn, int * orderersSha
 }
 
 bool Order::operator==(const Order & order1) {
-	return order1.price == price;
+	return price == order1.price;
 }
 
 bool Order::operator<(const Order & order1) {
-	return order1.price < price;
+	return price < order1.price;
 }
 
 bool Order::operator>(const Order & order1) {
-	return order1.price > price;
+	return price > order1.price;
+}
+
+bool Order::operator>=(const Order & order1) {
+	return (price >= order1.price);
+}
+
+bool Order::operator<=(const Order & order1) {
+	return price <= order1.price;
 }
 
 
 
 void Order::print() {
-	std::cout << fillsLeft << " " << (isBuying ? "B" : "S") << " @ " << price << std::endl;
+	std::cout << fillsLeft << " " << (isBuying ? "B" : "S") << " @ " << price/100 << "." << price%100 << std::endl;
 }

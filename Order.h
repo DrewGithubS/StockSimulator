@@ -19,6 +19,8 @@ public:
 	bool operator==(const Order & order1);
 	bool operator<(const Order & order1);
 	bool operator>(const Order & order1);
+	bool operator<=(const Order & order1);
+	bool operator>=(const Order & order1);
 
 	void print();
 

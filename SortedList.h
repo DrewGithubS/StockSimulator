@@ -48,7 +48,6 @@ public:
 	}
 
 	SortedList<Type> * remove(Type * dataIn) {
-		std::cout << "Removing order" << std::endl;
 		if(data == dataIn) {
 			if(next == 0) {
 				isSet = false;
@@ -62,12 +61,10 @@ public:
 			return this;
 		}
 		SortedList<Type> * temp = this;
-		std::cout << "Searching for order" << std::endl;
-		while(temp->next != 0 && temp->next->isSet) {
+		while(temp != 0 && temp->next != 0 && temp->next->isSet) {
 			if(temp->next->data == dataIn) {
 				SortedList<Type> * toDelete = temp->next;
 				temp->next = temp->next->next;
-				std::cout << "Trying to delete order" << std::endl;
 				delete toDelete;
 			}
 			temp = temp->next;
