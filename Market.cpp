@@ -196,7 +196,7 @@ void Market::cancelOrder(Order * order) {
 }
 
 void Market::updatePrice() {
-	history.append(PriceData{lastPrice, volume});
+	history->append(PriceData{lastPrice, volume});
 	volume = 0;
 }
 

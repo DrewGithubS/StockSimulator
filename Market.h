@@ -12,7 +12,7 @@ class CircularBuffer;
 struct PriceData {
 	int price;
 	int volume;
-}
+};
 
 class Market {
 public:
@@ -21,7 +21,7 @@ public:
 	SortedList<Order> * buyers;
 	SortedList<Order> * sellers;
 	int historyLength;
-	CircularBuffer<int> history;
+	CircularBuffer<int> * history;
 
 
 	Market(int lastPrice, int historyLengthIn);

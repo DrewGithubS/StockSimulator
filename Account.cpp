@@ -1,7 +1,9 @@
 #include <cstdlib>
 #include <iostream>
+#include <string.h>
 
 #include "Account.h"
+#include "CircularBuffer.h"
 #include "Order.h"
 #include "Market.h"
 
@@ -50,44 +52,77 @@ void Account::doAction() {
 		if(equity < 0) {
 			marginCall();
 		} else {
-			// Get action
-			// Do action
+			// AI->inputs = (int *) malloc(historyLength * 2 * sizeof(int));
+			memcpy(AI->inputs, market->history->array, market->historyLength * sizeof(PriceData));
+			AI->feedForward();
+			float * output = (float *) malloc(7 * sizeof(float));
+			output = AI->output;
+
+			// Parsing the AI output
+			float maxOfFive = output[0];
+			int maxOfFiveIndex = 0;
+			for(int i = 1; i < 5; i++) {
+				maxOfFiveIndex = output[i] > maxOfFive ? i : maxOfFiveIndex;
+				maxOfFive = output[i] > maxOfFive ? output[i] : maxOfFive;
+			}
+
+			if(maxOfFiveIndex == 4) {
+				int orderCancel = (int) (output[5] * maxOrders);
+				market->cancelOrder(orders[orderCancel]);
+			} else {
+				switch(maxOfFiveIndex) {
+					case 0:
+						marketBuy((int) (output[5] * 100));
+						break;
+					case 1:
+						marketSell((int) (output[5] * 100));
+						break;
+					case 2:
+						limitBuy((int) (output[5] * 100), (int) (output[6] * 100));
+						break;
+					case 3:
+						limitSell((int) (output[5] * 100), (int) (output[6] * 100));
+						break;
+					default:
+						break;
+				}
+			}
 		}
 	}
 }
 
-void Account::marketBuy(int shares) {
+void Account::marketBuy(int sharesIn) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex] = new Order(shares, 0, &money, &shares, true, true, false, this);
+	orders[currentOrderIndex] = new Order(sharesIn, 0, &money, &shares, true, true, false, this);
 	market->handleMarketBuy(orders[currentOrderIndex]);
 	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
-void Account::marketSell(int shares) {
+void Account::marketSell(int sharesIn) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex] = new Order(shares, 0, &money, &shares, true, false, false, this);
+	orders[currentOrderIndex] = new Order(sharesIn, 0, &money, &shares, true, false, false, this);
 	market->handleMarketSell(orders[currentOrderIndex]);
 	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
-void Account::limitBuy(int shares, int price) {
+void Account::limitBuy(int sharesIn, int price) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex] = new Order(shares, price, &money, &shares, false, true, false, this);
+	orders[currentOrderIndex] = new Order(sharesIn, price, &money, &shares, false, true, false, this);
 	market->handleLimitBuy(orders[currentOrderIndex]);
 	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
 
-void Account::limitSell(int shares, int price) {
+void Account::limitSell(int sharesIn, int price) {
 	if(orders[currentOrderIndex]) {
 		market->cancelOrder(orders[currentOrderIndex]);
 	}
-	orders[currentOrderIndex] = new Order(shares, price, &money, &shares, false, false, false, this);
+	orders[currentOrderIndex] = new Order(sharesIn, price, &money, &shares, false, false, false, this);
 	market->handleLimitSell(orders[currentOrderIndex]);
 	currentOrderIndex = (currentOrderIndex+1) < maxOrders ? (currentOrderIndex+1) : 0;
 }
